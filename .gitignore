@@ -1,0 +1,17 @@
+# Entorno virtual
+.venv/
+
+# Compilados de PyInstaller
+build/
+dist/
+*.spec
+
+# Configuración local generada por la app (cada usuario tiene la suya)
+config/settings.json
+
+# Cachés de Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
