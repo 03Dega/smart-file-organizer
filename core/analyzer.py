@@ -1,7 +1,7 @@
 from collections import Counter
 
 from core.scanner import scan_folder
-from core.file_manager import classify_file
+from core.file_manager import classify_file, CATEGORY_FOLDER_NAMES
 from analyzers.image_analyzer import get_image_resolution
 from analyzers.audio_analyzer import get_audio_duration
 from analyzers.video_analyzer import get_video_info
@@ -56,14 +56,46 @@ def analyze_file(file_path):
     }
 
 
-def analyze_folder(folder_path):
+def _get_excluded_dir_names():
+    """
+    Nombres de carpeta que el escaneo recursivo debe evitar: las carpetas
+    de categoría por defecto (Imágenes, Videos, etc.) más las carpetas
+    destino de las reglas guardadas por el usuario. Así el escaneo
+    recursivo no vuelve a meterse a organizar lo que ya organizó antes.
+    """
+
+    excluded = list(CATEGORY_FOLDER_NAMES.values())
+
+    try:
+        from config.settings import load_rules
+
+        rules = load_rules()
+
+        excluded += [rule.destination_folder for rule in rules]
+
+    except Exception:
+        pass  # Si no se pueden cargar las reglas, se sigue solo con las de categoría
+
+    return excluded
+
+
+def analyze_folder(folder_path, recursive=False):
     """
     Analiza una carpeta y clasifica los archivos encontrados.
+
+    recursive=True incluye subcarpetas, excluyendo automáticamente las
+    carpetas que el propio programa usa como destino de organización.
 
     No mueve, copia ni elimina archivos.
     """
 
-    files = scan_folder(folder_path)
+    excluded_dir_names = _get_excluded_dir_names() if recursive else None
+
+    files = scan_folder(
+        folder_path,
+        recursive=recursive,
+        excluded_dir_names=excluded_dir_names
+    )
 
     return [analyze_file(file) for file in files]
 

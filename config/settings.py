@@ -1,13 +1,10 @@
 import json
+import sys
 from pathlib import Path
 
-import sys
-
 if getattr(sys, "frozen", False):
-    # El programa está corriendo como .exe empaquetado (PyInstaller)
     BASE_DIR = Path(sys.executable).parent
 else:
-    # El programa está corriendo como script normal (python main.py)
     BASE_DIR = Path(__file__).parent
 
 SETTINGS_PATH = BASE_DIR / "settings.json"
@@ -20,7 +17,7 @@ def load_settings():
     """
 
     if not SETTINGS_PATH.exists():
-        return {"rules": []}
+        return {"rules": [], "scheduled_tasks": []}
 
     with open(SETTINGS_PATH, "r", encoding="utf-8") as file:
         return json.load(file)
@@ -56,5 +53,29 @@ def save_rules(rules):
     settings = load_settings()
 
     settings["rules"] = [rule.to_dict() for rule in rules]
+
+    save_settings(settings)
+
+
+def load_scheduled_tasks():
+    """
+    Carga la lista de tareas programadas guardadas (diccionarios simples:
+    name, folder, hour, minute).
+    """
+
+    settings = load_settings()
+
+    return settings.get("scheduled_tasks", [])
+
+
+def save_scheduled_tasks(tasks):
+    """
+    Guarda la lista de tareas programadas, preservando el resto de la
+    configuración existente.
+    """
+
+    settings = load_settings()
+
+    settings["scheduled_tasks"] = tasks
 
     save_settings(settings)

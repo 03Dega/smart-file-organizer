@@ -11,6 +11,7 @@ from core.analyzer import analyze_folder, generate_statistics
 from core.file_manager import build_organization_plan, execute_plan
 from core.rules import build_rules_plan
 from core.version import APP_VERSION
+from core.startup import is_startup_enabled, enable_startup, disable_startup
 from config.settings import load_rules
 
 
@@ -33,8 +34,8 @@ class MainWindow:
         self.root = root
 
         self.root.title(f"Smart File Organizer v{APP_VERSION}")
-        self.root.geometry("1000x800")
-        self.root.minsize(900, 700)
+        self.root.geometry("1000x830")
+        self.root.minsize(900, 720)
 
         try:
             self.root.iconbitmap(resource_path("assets/icon.ico"))
@@ -85,7 +86,7 @@ class MainWindow:
         folder_frame.pack(
             fill="x",
             padx=25,
-            pady=10
+            pady=(10, 2)
         )
 
         folder_label = ttk.Label(
@@ -116,6 +117,34 @@ class MainWindow:
         )
 
         browse_button.pack(side="right")
+
+        # Fila con la opción de escaneo recursivo, justo debajo de la carpeta
+
+        options_frame = ttk.Frame(self.root)
+
+        options_frame.pack(
+            fill="x",
+            padx=25,
+            pady=(0, 10)
+        )
+
+        self.recursive_var = tk.BooleanVar(value=False)
+
+        recursive_checkbox = ttk.Checkbutton(
+            options_frame,
+            text="Incluir subcarpetas al analizar",
+            variable=self.recursive_var,
+            bootstyle="round-toggle"
+        )
+
+        recursive_checkbox.pack(side="left")
+
+        ttk.Label(
+            options_frame,
+            text="(se saltan automáticamente las carpetas que el programa ya organizó)",
+            font=("Segoe UI", 8),
+            bootstyle="secondary"
+        ).pack(side="left", padx=(10, 0))
 
         # =====================================================
         # BOTÓN ANALIZAR
@@ -173,8 +202,8 @@ class MainWindow:
         )
 
         # =====================================================
-        # PIE DE PÁGINA (versión + actualizaciones) — se ubica primero
-        # para quedar en el fondo absoluto de la ventana
+        # PIE DE PÁGINA (inicio con Windows + versión + actualizaciones)
+        # se ubica primero para quedar en el fondo absoluto de la ventana
         # =====================================================
 
         footer_frame = ttk.Frame(self.root)
@@ -194,6 +223,18 @@ class MainWindow:
         )
 
         version_label.pack(side="left")
+
+        self.startup_var = tk.BooleanVar(value=is_startup_enabled())
+
+        startup_checkbox = ttk.Checkbutton(
+            footer_frame,
+            text="Iniciar con Windows",
+            variable=self.startup_var,
+            bootstyle="round-toggle",
+            command=self.toggle_startup
+        )
+
+        startup_checkbox.pack(side="left", padx=(20, 0))
 
         update_button = ttk.Button(
             footer_frame,
@@ -287,12 +328,12 @@ class MainWindow:
         ).pack(side="left", padx=10)
 
         # =====================================================
-        # SECCIÓN: VIGILANCIA AUTOMÁTICA
+        # SECCIÓN: AUTOMATIZACIÓN (vigilancia + tareas programadas)
         # =====================================================
 
         watch_section = ttk.LabelFrame(
             self.root,
-            text="Vigilancia automática de carpeta",
+            text="Automatización",
             bootstyle="warning"
         )
 
@@ -315,7 +356,15 @@ class MainWindow:
             command=self.toggle_watching
         )
 
-        self.watch_toggle_button.pack(side="left", padx=(0, 15))
+        self.watch_toggle_button.pack(side="left", padx=(0, 10))
+
+        ttk.Button(
+            watch_controls_frame,
+            text="TAREAS PROGRAMADAS...",
+            bootstyle="secondary-outline",
+            padding=(15, 8),
+            command=self.open_scheduled_tasks
+        ).pack(side="left", padx=10)
 
         self.watch_status_label = ttk.Label(
             watch_controls_frame,
@@ -324,7 +373,7 @@ class MainWindow:
             bootstyle="secondary"
         )
 
-        self.watch_status_label.pack(side="left")
+        self.watch_status_label.pack(side="left", padx=(15, 0))
 
         self.watch_log_label = ttk.Label(
             watch_section,
@@ -431,7 +480,10 @@ class MainWindow:
             return
 
         try:
-            self.analyzed_files = analyze_folder(folder)
+            self.analyzed_files = analyze_folder(
+                folder,
+                recursive=self.recursive_var.get()
+            )
 
             statistics = generate_statistics(self.analyzed_files)
 
@@ -823,6 +875,38 @@ class MainWindow:
 
         if self.analyzed_files:
             self.analyze()
+
+    # =========================================================
+    # TAREAS PROGRAMADAS (reservado — se implementa más adelante)
+    # =========================================================
+
+    def open_scheduled_tasks(self):
+        from ui.scheduled_tasks_window import ScheduledTasksWindow
+
+        if hasattr(self, "scheduled_tasks_window") and self.scheduled_tasks_window.winfo_exists():
+            self.scheduled_tasks_window.lift()
+            self.scheduled_tasks_window.focus_force()
+            return
+
+        self.scheduled_tasks_window = ScheduledTasksWindow(self.root)
+    # =========================================================
+    # INICIO CON WINDOWS
+    # =========================================================
+
+    def toggle_startup(self):
+        try:
+            if self.startup_var.get():
+                enable_startup()
+            else:
+                disable_startup()
+
+        except Exception as error:
+            messagebox.showerror(
+                "Error",
+                f"No se pudo actualizar el inicio automático:\n\n{error}"
+            )
+
+            self.startup_var.set(not self.startup_var.get())
 
     # =========================================================
     # BUSCAR ACTUALIZACIONES

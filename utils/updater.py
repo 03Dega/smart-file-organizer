@@ -5,7 +5,7 @@ from core.version import APP_VERSION
 
 # TODO: cuando tengas un repositorio en GitHub, reemplaza esta URL por la
 # ruta "raw" de tu propio archivo version.json. Instrucciones al final.
-UPDATE_INFO_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPO/main/version.json"
+UPDATE_INFO_URL = "https://raw.githubusercontent.com/03Dega/smart-file-organizer/main/version.json"
 
 
 def check_for_updates():
