@@ -1,5 +1,5 @@
 {
-    "version": "4.0.0",
+    "version": "4.1.0",
     "download_url": "https://github.com/03Dega/smart-file-organizer/releases/latest",
-    "notes": "Primera versión pública: organización por categoría, reglas personalizadas, análisis multimedia y vigilancia automática de carpetas."
+    "notes": "Automatización completa: inicio con Windows, subcarpetas recursivas, tareas programadas."
 }
